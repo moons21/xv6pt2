@@ -63,15 +63,23 @@ exec(char *path, char **argv)
 
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
-  sz = PGROUNDUP(sz);
-  stackBot = KERNBASE - 4;
+  sz = PGROUNDUP(sz); // heap pointer
+
+  cprintf("old sz is %d, new size should be %d \n", sz, sz + 2*PGSIZE);
   if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0)
     goto bad;
-
-  if((stackTop = allocuvm(pgdir, stackBot, stackBot - 2*PGSIZE)) == 0)
+  cprintf("New size is: %d \n", sz);
+  cprintf("sz - 2pgsize is: %d \n", sz - 2*PGSIZE);
+  
+  stackBot = KERNBASE - 4;	// Bottom of stack (starts below kernel)
+  stackBot = PGROUNDDOWN(stackBot); // round it down tho
+  cprintf("stackBot is %d \n", stackBot);
+  if((stackBot = allocuvm(pgdir, stackBot - 2*PGSIZE, stackBot)) == 0)
     goto bad;
-
+  cprintf("stackBot shouldnt change is %d \n", stackBot);
+  stackTop = 420;
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
+  //clearpteu(pgdir, (char*)(stackBot - 2*PGSIZE));
   sp = sz;
 
   // Push argument strings, prepare rest of stack in ustack.

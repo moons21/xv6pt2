@@ -72,7 +72,7 @@ exec(char *path, char **argv)
   stack = KERNBASE - 4;	// Bottom of stack (starts below kernel)
   stack = PGROUNDDOWN(stack); // round it down tho
   if((stack = allocuvm(pgdir, stack - 1*PGSIZE, stack)) == 0)
-    goto bad;
+    panic("Couldnt allocate stack!\n");
   stackSize = 1; // size is 1
 
   // Buffer stuff FIXME
@@ -80,7 +80,8 @@ exec(char *path, char **argv)
   //clearpteu(pgdir, (char*)(stackBot - 2*PGSIZE));
 
   // UPDATE STACK POINTER:
-  sp = sz;
+  sp = sz; // OLD FIXME
+  //sp = stack; // Pointer is at bottom of stack
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
@@ -112,9 +113,10 @@ exec(char *path, char **argv)
   curproc->pgdir = pgdir;
 
   curproc->sz = sz; // old FIXME
-  //curproc->sz = stack - 1*PGSIZE; // set to bottom of stack 
+  //curproc->sz = stack; // set to bottom of stack (TOP OF UESRSPACE)
   curproc->heap = sz; // old sz is now where heap begins
-  curproc->stackSize = stackSize;
+  curproc->stackSize = stackSize; 
+
   curproc->tf->eip = elf.entry;  // main
 
   curproc->tf->esp = sp;

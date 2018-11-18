@@ -322,6 +322,7 @@ copyuvm(pde_t *pgdir, uint sz, uint stackSize)
 
   if((d = setupkvm()) == 0)
     return 0;
+  // COPY HEAP
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
@@ -335,7 +336,12 @@ copyuvm(pde_t *pgdir, uint sz, uint stackSize)
     if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0)
       goto bad;
   }
-  /*for(i = KERNBASE - 4; i > stackTop; i -= PGSIZE){
+  // COPY THE NEW STACK
+  int j; // used to loop through pages
+  i = PGROUNDDOWN(KERNBASE - 4) - PGSIZE; // get pte
+  for(j = 0; j < stackSize; j += 1){
+    cprintf("copy page\n");
+    i -= PGSIZE * j;
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
     if(!(*pte & PTE_P))
@@ -348,7 +354,6 @@ copyuvm(pde_t *pgdir, uint sz, uint stackSize)
     if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0)
       goto bad;
   }
-   */
 
   return d;
 

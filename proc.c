@@ -197,6 +197,8 @@ fork(void)
     return -1;
   }
   np->sz = curproc->sz;
+  np->stackSize = curproc->stackSize;	// must update new process!!!
+  np->heap = curproc->heap;
   np->parent = curproc;
   *np->tf = *curproc->tf;
 

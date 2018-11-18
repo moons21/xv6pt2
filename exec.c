@@ -13,7 +13,8 @@ exec(char *path, char **argv)
   char *s, *last;
   int i, off;
   uint argc, sz, sp, ustack[3+MAXARG+1];
-  uint stackTop, stackBot;
+  uint stack;
+  uint stackSize;
   struct elfhdr elf;
   struct inode *ip;
   struct proghdr ph;
@@ -65,21 +66,20 @@ exec(char *path, char **argv)
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz); // heap pointer
 
-  cprintf("old sz is %d, new size should be %d \n", sz, sz + 2*PGSIZE);
   if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0)
     goto bad;
-  cprintf("New size is: %d \n", sz);
-  cprintf("sz - 2pgsize is: %d \n", sz - 2*PGSIZE);
   
-  stackBot = KERNBASE - 4;	// Bottom of stack (starts below kernel)
-  stackBot = PGROUNDDOWN(stackBot); // round it down tho
-  cprintf("stackBot is %d \n", stackBot);
-  if((stackBot = allocuvm(pgdir, stackBot - 2*PGSIZE, stackBot)) == 0)
+  stack = KERNBASE - 4;	// Bottom of stack (starts below kernel)
+  stack = PGROUNDDOWN(stack); // round it down tho
+  if((stack = allocuvm(pgdir, stack - 1*PGSIZE, stack)) == 0)
     goto bad;
-  cprintf("stackBot shouldnt change is %d \n", stackBot);
-  stackTop = 420;
+  stackSize = 1; // size is 1
+
+  // Buffer stuff FIXME
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
   //clearpteu(pgdir, (char*)(stackBot - 2*PGSIZE));
+
+  // UPDATE STACK POINTER:
   sp = sz;
 
   // Push argument strings, prepare rest of stack in ustack.
@@ -110,10 +110,13 @@ exec(char *path, char **argv)
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
-  curproc->sz = sz;
-  curproc->stackTop = stackTop;
-  curproc->stackBot = stackBot;
+
+  curproc->sz = sz; // old FIXME
+  //curproc->sz = stack - 1*PGSIZE; // set to bottom of stack 
+  curproc->heap = sz; // old sz is now where heap begins
+  curproc->stackSize = stackSize;
   curproc->tf->eip = elf.entry;  // main
+
   curproc->tf->esp = sp;
   switchuvm(curproc);
   freevm(oldpgdir);

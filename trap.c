@@ -46,22 +46,35 @@ trap(struct trapframe *tf)
     return;
   }
   uint offender;
-  uint stackTop; 
+  uint stackTop;
+
   switch(tf->trapno){
  // Trap handler stack.c
   case 14:
     stackTop = myproc()->stackBot - (myproc()->stackSize * PGSIZE);
+    cprintf("sz: %d \n", myproc()->sz);
     offender  = rcr2();
     cprintf("UPOH\n");
     cprintf("Offending adress: %d \n", offender); 
     cprintf("top of stack is %d \n", stackTop);
     cprintf("stacktop - offender = %d\n", stackTop - offender);
-    // Trap handler stack.c// In user space, assume process misbehaved.
-    cprintf("pid %d %s: trap %d err %d on cpu %d "
-            "eip 0x%x addr 0x%x--kill proc\n",
-            myproc()->pid, myproc()->name, tf->trapno,
-            tf->err, cpuid(), tf->eip, rcr2());
-    myproc()->killed = 1;
+
+    // growth stack if we have enough room. We have big gap between sz and 
+    // stackTop, it takes forever to cause page fault
+    uint szRound = PGROUNDUP(myproc()->sz);
+    if (((stackTop - szRound) > 0) && ((stackTop - szRound) > 1*PGSIZE)){
+      cprintf("growth\n");
+      if ((stackTop = allocuvm(myproc()->pgdir, stackTop - 1*PGSIZE, stackTop)) == 0)
+	panic("couldnt allocate stack!\n");
+      ++(myproc()->stackSize);
+    }
+    else{
+      cprintf("pid %d %s: trap %d err %d on cpu %d "
+	      "eip 0x%x addr 0x%x--kill proc\n",
+	      myproc()->pid, myproc()->name, tf->trapno,
+	      tf->err, cpuid(), tf->eip, rcr2());
+      myproc()->killed = 1;
+    }
 
     break;
   case T_IRQ0 + IRQ_TIMER:

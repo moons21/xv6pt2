@@ -45,8 +45,25 @@ trap(struct trapframe *tf)
       exit();
     return;
   }
-
+  uint offender;
+  uint stackTop; 
   switch(tf->trapno){
+ // Trap handler stack.c
+  case 14:
+    stackTop = myproc()->stackBot - (myproc()->stackSize * PGSIZE);
+    offender  = rcr2();
+    cprintf("UPOH\n");
+    cprintf("Offending adress: %d \n", offender); 
+    cprintf("top of stack is %d \n", stackTop);
+    cprintf("stacktop - offender = %d\n", stackTop - offender);
+    // Trap handler stack.c// In user space, assume process misbehaved.
+    cprintf("pid %d %s: trap %d err %d on cpu %d "
+            "eip 0x%x addr 0x%x--kill proc\n",
+            myproc()->pid, myproc()->name, tf->trapno,
+            tf->err, cpuid(), tf->eip, rcr2());
+    myproc()->killed = 1;
+
+    break;
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){
       acquire(&tickslock);

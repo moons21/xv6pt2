@@ -10,6 +10,7 @@
 int
 exec(char *path, char **argv)
 {
+  //cprintf("\%-------------EXEC-------------%\n");
   char *s, *last;
   int i, off;
   uint argc, sz, sp, ustack[3+MAXARG+1];
@@ -69,6 +70,7 @@ exec(char *path, char **argv)
   if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0)
     goto bad;
   
+  // NEW
   stack = KERNBASE - 4;	// Bottom of stack (starts below kernel)
   stack = PGROUNDDOWN(stack); // round it down tho
   if((stack = allocuvm(pgdir, stack - 1*PGSIZE, stack)) == 0)
@@ -76,12 +78,12 @@ exec(char *path, char **argv)
   stackSize = 1; // size is 1
 
   // Buffer stuff FIXME
-  clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
+  //clearpteu(pgdir, (char*)(sz - 2*PGSIZE)); // OLD FIXME
   //clearpteu(pgdir, (char*)(stackBot - 2*PGSIZE));
 
   // UPDATE STACK POINTER:
-  sp = sz; // OLD FIXME
-  //sp = stack; // Pointer is at bottom of stack
+  //sp = sz; // OLD FIXME
+  sp = stack; // Pointer is at bottom of stack
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
@@ -112,14 +114,22 @@ exec(char *path, char **argv)
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
 
-  curproc->sz = sz; // old FIXME
-  //curproc->sz = stack; // set to bottom of stack (TOP OF UESRSPACE)
-  curproc->heap = sz; // old sz is now where heap begins
+  curproc->sz = sz; 
+  curproc->stackBot = stack; // set to bottom of stack (TOP OF UESRSPACE)
   curproc->stackSize = stackSize; 
 
   curproc->tf->eip = elf.entry;  // main
 
   curproc->tf->esp = sp;
+  /*
+  cprintf("-----------------------------\n");
+  cprintf("Kernbase: %d\n", KERNBASE -4);
+  cprintf("PID: %d\n", curproc->pid);
+  cprintf("heap: %d\n", curproc->heap);
+  cprintf("Stack: %d\n", curproc->sz);
+  cprintf("StackSize: %d\n", curproc->stackSize);
+  cprintf("-----------------------------\n");
+  */
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;

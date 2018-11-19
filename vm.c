@@ -313,12 +313,20 @@ clearpteu(pde_t *pgdir, char *uva)
 // Given a parent process's page table, create a copy
 // of it for a child.
 pde_t*
-copyuvm(pde_t *pgdir, uint sz, uint stackSize)
+copyuvm(pde_t *pgdir, uint sz, uint stackSize, uint stackBot)
 {
   pde_t *d;
   pte_t *pte;
   uint pa, i, flags;
   char *mem;
+  /*
+  cprintf("---------COPY-----------\n");
+  cprintf("Copy from 0 thru sz: %d\n", sz);
+  cprintf("stackSize is : %d\n", stackSize);
+  cprintf("Copy from %d to %d\n", PGROUNDDOWN(KERNBASE-4), PGROUNDDOWN(KERNBASE - 4) - PGSIZE);
+  cprintf("Stack size in bits: %d\n", PGROUNDDOWN(KERNBASE -4) - (PGROUNDDOWN(KERNBASE -4) - PGSIZE));
+  cprintf("-------------------------\n");
+  */
 
   if((d = setupkvm()) == 0)
     return 0;
@@ -338,9 +346,8 @@ copyuvm(pde_t *pgdir, uint sz, uint stackSize)
   }
   // COPY THE NEW STACK
   int j; // used to loop through pages
-  i = PGROUNDDOWN(KERNBASE - 4) - PGSIZE; // get pte
+  i = stackBot - PGSIZE; // get pte
   for(j = 0; j < stackSize; j += 1){
-    cprintf("copy page\n");
     i -= PGSIZE * j;
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");

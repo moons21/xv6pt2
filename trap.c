@@ -61,10 +61,10 @@ trap(struct trapframe *tf)
 
     // growth stack if we have enough room. We have big gap between sz and 
     // stackTop, it takes forever to cause page fault
-    uint szRound = PGROUNDUP(myproc()->sz);
-    if (((stackTop - szRound) > 0) && ((stackTop - szRound) > 1*PGSIZE)){
+    offender = PGROUNDDOWN(offender);
+    if (myproc()->sz < offender){
       cprintf("growth\n");
-      if ((stackTop = allocuvm(myproc()->pgdir, stackTop - 1*PGSIZE, stackTop)) == 0)
+      if ((stackTop = allocuvm(myproc()->pgdir, offender, stackTop)) == 0)
 	panic("couldnt allocate stack!\n");
       ++(myproc()->stackSize);
     }

@@ -59,8 +59,7 @@ trap(struct trapframe *tf)
     cprintf("top of stack is %d \n", stackTop);
     cprintf("stacktop - offender = %d\n", stackTop - offender);
 
-    // growth stack if we have enough room. We have big gap between sz and 
-    // stackTop, it takes forever to cause page fault
+    // growth stack if we have enough space
     offender = PGROUNDDOWN(offender);
     if (myproc()->sz < offender){
       cprintf("growth\n");
@@ -68,6 +67,8 @@ trap(struct trapframe *tf)
 	panic("couldnt allocate stack!\n");
       ++(myproc()->stackSize);
     }
+
+    // when we run out of space
     else{
       cprintf("pid %d %s: trap %d err %d on cpu %d "
 	      "eip 0x%x addr 0x%x--kill proc\n",

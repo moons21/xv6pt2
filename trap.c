@@ -60,12 +60,13 @@ trap(struct trapframe *tf)
     cprintf("stacktop - offender = %d\n", stackTop - offender);
 
     // growth stack if we have enough space
+    //offender = 2147459018;
     offender = PGROUNDDOWN(offender);
     if (myproc()->sz < offender){
       cprintf("growth\n");
       if ((stackTop = allocuvm(myproc()->pgdir, offender, stackTop)) == 0)
 	panic("couldnt allocate stack!\n");
-      myproc()->stackSize = (stackTop - myproc()->stackBot) / PGSIZE;
+      ++(myproc()->stackSize);
     }
 
     // when we run out of space

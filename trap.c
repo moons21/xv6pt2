@@ -52,19 +52,18 @@ trap(struct trapframe *tf)
  // Trap handler stack.c
   case 14:
     stackTop = myproc()->stackBot - (myproc()->stackSize * PGSIZE);
-    cprintf("sz: %d \n", myproc()->sz);
+    //cprintf("sz: %d \n", myproc()->sz);
     offender  = rcr2();
-    cprintf("UPOH\n");
-    cprintf("Offending adress: %d \n", offender); 
-    cprintf("top of stack is %d \n", stackTop);
-    cprintf("stacktop - offender = %d\n", stackTop - offender);
+    //cprintf("UPOH\n");
+    //cprintf("Offending adress: %d \n", offender); 
+    //cprintf("top of stack is %d \n", stackTop);
+    //cprintf("stacktop - offender = %d\n", stackTop - offender);
 
     // growth stack if we have enough space
-    //offender = 2147459018;
-    offender = PGROUNDDOWN(offender);
-    if (myproc()->sz < offender){
-      cprintf("growth\n");
-      if ((stackTop = allocuvm(myproc()->pgdir, offender, stackTop)) == 0)
+    uint offendRoundDown = PGROUNDDOWN(offender);
+    if ((myproc()->sz < offendRoundDown) && (offender > (stackTop - PGSIZE))){
+      //cprintf("growth\n");
+      if ((stackTop = allocuvm(myproc()->pgdir, stackTop - PGSIZE, stackTop)) == 0)
 	panic("couldnt allocate stack!\n");
       ++(myproc()->stackSize);
     }

@@ -67,7 +67,7 @@ exec(char *path, char **argv)
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz); // heap pointer
 
-  if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0)
+  if((sz = allocuvm(pgdir, sz, sz + 1*PGSIZE)) == 0)
     goto bad;
   
   // NEW
@@ -78,7 +78,7 @@ exec(char *path, char **argv)
   stackSize = 1; // size is 1
 
   // Buffer stuff FIXME
-  //clearpteu(pgdir, (char*)(sz - 2*PGSIZE)); // OLD FIXME
+  clearpteu(pgdir, (char*)(sz - 1*PGSIZE)); // OLD FIXME
   //clearpteu(pgdir, (char*)(stackBot - 2*PGSIZE));
 
   // UPDATE STACK POINTER:

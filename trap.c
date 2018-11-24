@@ -52,22 +52,15 @@ trap(struct trapframe *tf)
  // Trap handler stack.c
   case 14:
     stackTop = myproc()->stackBot - (myproc()->stackSize * PGSIZE);
-    //cprintf("sz: %d \n", myproc()->sz);
     offender  = rcr2();
-    //cprintf("UPOH\n");
-    //cprintf("Offending adress: %d \n", offender); 
-    //cprintf("top of stack is %d \n", stackTop);
-    //cprintf("stacktop - offender = %d\n", stackTop - offender);
 
     // growth stack if we have enough space
     uint offendRoundDown = PGROUNDDOWN(offender);
     if ((myproc()->sz < offendRoundDown) && (offender > (stackTop - PGSIZE))){
-      //cprintf("growth\n");
       if ((stackTop = allocuvm(myproc()->pgdir, stackTop - PGSIZE, stackTop)) == 0)
 	panic("couldnt allocate stack!\n");
       ++(myproc()->stackSize);
     }
-
     // when we run out of space
     else{
       cprintf("pid %d %s: trap %d err %d on cpu %d "
@@ -76,7 +69,6 @@ trap(struct trapframe *tf)
 	      tf->err, cpuid(), tf->eip, rcr2());
       myproc()->killed = 1;
     }
-
     break;
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){

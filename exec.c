@@ -10,7 +10,6 @@
 int
 exec(char *path, char **argv)
 {
-  //cprintf("\%-------------EXEC-------------%\n");
   char *s, *last;
   int i, off;
   uint argc, sz, sp, ustack[3+MAXARG+1];
@@ -67,8 +66,10 @@ exec(char *path, char **argv)
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz); // heap pointer
 
+  /*  // No longer need to expand sz
   if((sz = allocuvm(pgdir, sz, sz + 1*PGSIZE)) == 0)
     goto bad;
+  */
   
   // NEW
   stack = KERNBASE - 4;	// Bottom of stack (starts below kernel)
@@ -77,12 +78,8 @@ exec(char *path, char **argv)
     panic("Couldnt allocate stack!\n");
   stackSize = 1; // size is 1
 
-  // Buffer stuff FIXME
-  clearpteu(pgdir, (char*)(sz - 1*PGSIZE)); // OLD FIXME
-  //clearpteu(pgdir, (char*)(stackBot - 2*PGSIZE));
 
   // UPDATE STACK POINTER:
-  //sp = sz; // OLD FIXME
   sp = stack; // Pointer is at bottom of stack
 
   // Push argument strings, prepare rest of stack in ustack.
@@ -121,15 +118,6 @@ exec(char *path, char **argv)
   curproc->tf->eip = elf.entry;  // main
 
   curproc->tf->esp = sp;
-  /*
-  cprintf("-----------------------------\n");
-  cprintf("Kernbase: %d\n", KERNBASE -4);
-  cprintf("PID: %d\n", curproc->pid);
-  cprintf("heap: %d\n", curproc->heap);
-  cprintf("Stack: %d\n", curproc->sz);
-  cprintf("StackSize: %d\n", curproc->stackSize);
-  cprintf("-----------------------------\n");
-  */
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;

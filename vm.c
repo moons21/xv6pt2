@@ -236,6 +236,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 
       cprintf("sz: %d\n", myproc()->sz);
       cprintf("StackTop: %d\n", myproc()->stackBot - (myproc()->stackSize * PGSIZE));
+      cprintf("StackSize: %d\n", myproc()->stackSize);
 
       cprintf("allocuvm out of memory\n");
       deallocuvm(pgdir, newsz, oldsz);
@@ -327,15 +328,6 @@ copyuvm(pde_t *pgdir, uint sz, uint stackSize, uint stackBot)
   pte_t *pte;
   uint pa, i, flags;
   char *mem;
-  /*
-  cprintf("---------COPY-----------\n");
-  cprintf("Copy from 0 thru sz: %d\n", sz);
-  cprintf("stackSize is : %d\n", stackSize);
-  cprintf("Copy from %d to %d\n", PGROUNDDOWN(KERNBASE-4), PGROUNDDOWN(KERNBASE - 4) - PGSIZE);
-  cprintf("Stack size in bits: %d\n", PGROUNDDOWN(KERNBASE -4) - (PGROUNDDOWN(KERNBASE -4) - PGSIZE));
-  cprintf("-------------------------\n");
-  */
-
   if((d = setupkvm()) == 0)
     return 0;
   // COPY HEAP
